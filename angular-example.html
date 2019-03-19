@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      display: flex;
+    }
+
+    .button {
+      border: 2px solid black;
+      border-radius: 10px;
+      padding: 5px;
+      cursor: pointer;
+    }
+
+    .coin {
+      color: black;
+      background-color: gold;
+      border: 1px solid black;
+      padding: 5px;
+    }
+
+
+  </style>
+</head>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+<script src="./lib/ShuffleClient.js"></script>
+<body>
+
+<div ng-app="myApp" ng-controller="myCtrl"  ng-cloak>
+  <div ng-click="toggleShuffleStatus()" class="button">
+    {{ doTheShuffle ? 'Stop Shuffling' : 'Start Shuffling!' }}
+  </div>
+
+  <br><br>
+
+  <p>
+    Skipped Coins
+    <span ng-if="client.skipped && client.skipped.length">
+      ( {{ client.skipped.length }} )
+    </span>
+  </p>
+  <div ng-repeat="coin in client.skipped" class="coin">
+    {{ coin.amountSatoshis }} sats
+  </div>
+
+  <p>
+    In Progress
+    <span ng-if="client.rounds && client.rounds.length">
+      ( {{ client.rounds.length }} )
+    </span>
+  </p>
+  <div ng-repeat="round in client.rounds" class="coin">
+    {{ round.coin && round.coin.amountSatoshis }} sats
+  </div>
+
+  <p>
+    Unshuffled Coins
+    <span ng-if="client.coins && client.coins.length">
+      ( {{ client.coins.length }} )
+    </span>
+  </p>
+  <div ng-repeat="coin in client.coins" class="coin">
+    {{ coin.amountSatoshis }} sats
+  </div>
+
+  <p>
+    Shuffled Coins
+    <span ng-if="client.shuffled && client.shuffled.length">
+      ( {{ client.shuffled.length }} )
+    </span>
+  </p>
+
+  <div ng-repeat="coin in client.shuffled" class="coin">
+    {{ coin.amountSatoshis }} sats
+  </div>
+
+</div>
+
+<script>
+  var app = angular.module('myApp', []);
+  app.controller('myCtrl', function($scope) {
+
+    // To shuffle or not to shuffle
+    $scope.doTheShuffle = false;
+
+    // $scope.messageFromClient = 'Shuffle Client disconnected';
+
+    $scope.connectToServer = function() {
+      console.log('go server!');
+      $scope.client.shuffle();
+    };
+
+    $scope.toggleShuffleStatus = function() {
+      console.log('Stopping or starting shuffle!');
+
+      // Stop shuffling
+      if ($scope.doTheShuffle === false) {
+        $scope.client.start();
+      }
+      // Start Shuffling
+      else {
+        $scope.client.stop();
+      }
+
+      console.log('changing shuffle status from', $scope.doTheShuffle, 'to', !!!$scope.doTheShuffle);
+      $scope.doTheShuffle = $scope.client.isShuffling;
+
+    };
+
+    $scope.client = new ShuffleClient({
+      coins: [
+        {
+          cashAddress: 'bitcoincash:qr7u5383gw5ckyls29mlpralgj23w4pgvc7rp7kphs',
+          privateKey: 'abc123',
+          txid: 'ca7cd24835a00310634f2115d0182ea5eef622c4a8876a7093939dda46ab5dc5',
+          vout: 0,
+          amountSatoshis: 3258390
+        },
+
+        {
+          cashAddress: 'bitcoincash:qr7lekud8kkn3zamyedsf55n383c4zvv6s0t8m69fl',
+          privateKey: 'abc123',
+          txid: '02e79254e96885db1853efe8712898853cc6888320db69fa1fe04997dc15d872',
+          vout: 0,
+          amountSatoshis: 1629195
+        },
+
+        {
+          cashAddress: 'bitcoincash:qpazvaw8xdgqfw8uhxnyt4l39dkaxrlnrv8c5wepgu',
+          privateKey: 'abc123',
+          txid: '65bc4c458be413a0c4eb11de4d113e4255305ff1b6e2b6426a122bcc0db630b2',
+          vout: 0,
+          amountSatoshis: 1111
+        },
+
+        {
+          cashAddress: 'bitcoincash:qpazvaw8xdgqfw8uhxnyt4l39dkaxrlnrv8c5wepgu',
+          privateKey: 'abc123',
+          txid: '0bea16c776905bf24b6ecd8eb8f969484278780f84bc1768c9da8746c4bac30c',
+          vout: 1,
+          amountSatoshis: 2851092
+        }
+      ],
+      serverUri: 'wss://shuffle.servo.cash:1337',
+      protocolVersion: 100,
+      serverStatsUri: 'https://shuffle.servo.cash:8080/stats',
+      maxShuffleRounds: 4,
+      disableAutoShuffle: true
+    });
+
+    $scope.showEventMessage = function(eventData) {
+      console.log('EVENT!', eventData);
+      $scope.messageFromClient = 'Something happened:'+JSON.stringify(eventData,null,4);
+    }
+
+    for (let oneReason of ['shuffle', 'skipped']) {
+
+      $scope.client.on(oneReason, (shuffleObect) => {
+        $scope.$apply(function () {
+            $scope.client = $scope.client;
+        });
+      });
+
+    }
+
+
+  });
+</script>
+
+</body>
+</html>
