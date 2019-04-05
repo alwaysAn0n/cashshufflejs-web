@@ -1,8 +1,24 @@
 # Overview
 
-The app instantiates the ShuffleClient class with a collection of coins that need to be shuffled and the uri of the shuffle server.  The client then queries the shuffle server for connection setting and available pools.  If there are coins waiting to be shuffled, the client selects an unshuffled coin and uses it to instantiate a new ShuffleRound.
+### Testing
 
-The new ShuffleRound instance is be saved in the `shuffleClient.rounds` array.  Upon being instantiated, a new communication channel is opened with the server and the pre-shuffle messages take place.  The ShuffleRound instance emits progress events which are be monitored by the ShuffleClient instance so it knows how each round
-concludes.
+```
+const ShuffleClient = require('../cashshufflejs-web');
+const repl = require('repl');
+const shuffleIt = repl.start('cashshuffle > ');
 
-When the round is done, the ShuffleClient instance removes the round from it's array of active rounds.  For a successful round, the client moves the newly shuffled coin into its `shuffled` array.  It moves any new change output back into the unshuffled coin array.  If the round failed, the unshuffled coin is put back into the unshuffled bin so be used in a subsequent round.  Begin again...
+shuffleIt.context.client = new ShuffleClient({
+  coins: [{
+    cashAddress: 'bitcoincash:qr7u5383gw5ckyls29mlpralgj23w4pgvc7rp7kphs',
+    privateKey: 'L4QLJkku7 ... fG1LGaXWaA',
+    txid: '544c6ea203b16ccad7aa61ab89fd7f9c5927a73046df78b67f0f0c7e78d39afd',
+    vout: 1,
+    amountSatoshis: 666000
+  }],
+  serverUri: 'ws://localhost:1338',
+  protocolVersion: 300,
+  serverStatsUri: 'http://localhost:8080/stats',
+  maxShuffleRounds: 1
+});
+
+```
