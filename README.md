@@ -77,6 +77,8 @@ The URI for the cashshuffle server's `/stats` endpoint which provides the client
 
 Should the client immediately start shuffling?
 
-### Client methods
+### Documentation
+
+Check out the docs in `./docs`
 
 ##### TODO!

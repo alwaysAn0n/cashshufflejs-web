@@ -1,0 +1,36 @@
+{
+  "name": "cashshufflejs-web",
+  "version": "0.1.0",
+  "description": "A CashShuffle Client implementation for javascript",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alwaysAn0n/cashshufflejs-web.git"
+  },
+  "keywords": [
+    "CashShuffle",
+    "Bitcoin",
+    "Cash",
+    "Privacy"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alwaysAn0n/cashshufflejs-web/issues"
+  },
+  "homepage": "https://github.com/alwaysAn0n/cashshufflejs-web#readme",
+  "dependencies": {
+    "axios": "0.18.0",
+    "bitcoincashjs-fork": "1.0.3",
+    "lodash": "4.17.11",
+    "protobufjs": "6.8.8",
+    "ws": "6.2.1"
+  }
+}
