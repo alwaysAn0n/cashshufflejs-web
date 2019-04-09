@@ -24,7 +24,7 @@ shuffleIt.context.me = _.find(shuffleIt.context.round.players, { isMe: true });
 
 for (let onePlayer of shuffleIt.context.round.players) {
   if (onePlayer.isMe) {
-    return;
+    continue;
   }
   let somePlayer = {};
   somePlayer['player'+onePlayer.playerNumber] = onePlayer;
@@ -39,7 +39,7 @@ shuffleIt.context.Message = require('./lib/BetterMessage.js');
 shuffleIt.context.msg = messageUtils;
 shuffleIt.context.crypto = require('./lib/cryptoUtils.js');
 
-shuffleIt.context.util = {
+shuffleIt.context.tools = {
   crypto: require('./lib/cryptoUtils.js'),
   coin: require('./lib/coinUtils.js'),
   // Find a properly packed `Protocol Message` from
