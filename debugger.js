@@ -38,6 +38,7 @@ shuffleIt.context.PublicKey = shuffleIt.context.bch.PublicKey;
 shuffleIt.context.Message = require('./lib/BetterMessage.js');
 shuffleIt.context.msg = messageUtils;
 shuffleIt.context.crypto = require('./lib/cryptoUtils.js');
+shuffleIt.context._ = _;
 
 shuffleIt.context.tools = {
   crypto: require('./lib/cryptoUtils.js'),
