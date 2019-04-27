@@ -5,7 +5,7 @@ process.chdir(currentPath);
 
 const messageUtils = require('./lib/serverMessages.js');
 const _ = require('lodash');
-
+const bch = require('bitcoincashjs-fork');
 const shuffleIt = repl.start('cashshuffle debug > ');
 
 shuffleIt.context.round;
@@ -31,7 +31,7 @@ for (let onePlayer of shuffleIt.context.round.players) {
   _.extend(shuffleIt.context, somePlayer);
 }
 
-shuffleIt.context.bch = require('bitcoincashjs-fork');
+shuffleIt.context.bch = bch;
 shuffleIt.context.Address = shuffleIt.context.bch.Address;
 shuffleIt.context.PrivateKey = shuffleIt.context.bch.PrivateKey;
 shuffleIt.context.PublicKey = shuffleIt.context.bch.PublicKey;
@@ -43,6 +43,16 @@ shuffleIt.context._ = _;
 shuffleIt.context.tools = {
   crypto: require('./lib/cryptoUtils.js'),
   coin: require('./lib/coinUtils.js'),
+  loadProtobuffMessageFromMailbox: function(someMailboxMessageObject) {
+    let messageBuffer = Buffer.from(someMailboxMessageObject.protobuffMessage.components.buffer, 'base64');
+    let decodedMessage = messageUtils.decodeAndClassify(messageBuffer);
+    delete decodedMessage.components;
+
+    let sender = _.find(shuffleIt.context.round.players, { session: decodedMessage.pruned.message.session });
+
+    return _.extend(decodedMessage, { sender: sender });
+
+  },
   // Find a properly packed `Protocol Message` from
   // somewhere deep inside a base64 encoded string.
   findValidPackets: function(someBase64EncodedString) {
@@ -79,3 +89,5 @@ shuffleIt.context.tools = {
     return packets;
   }
 };
+
+
