@@ -94,7 +94,11 @@ Should the client immediately start shuffling? `false` by default.
 
 ### Documentation
 
-Check out the docs in `./docs`
+Check out the docs in `./docs` ( Actually don't.  It's empty )
+
+* See it in action at https://www.youtube.com/watch?v=-SZHDFlGyVY
+
+* See HD wallet demo at https://www.youtube.com/watch?v=anSlEdsp2Qo
 
 ##### TODO!
 
