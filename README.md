@@ -1,15 +1,15 @@
 # cashshufflejs-web
 
-A javascript Cashshuffle client for use in front-end web applications and the browser.
+A javascript Cashshuffle client for use in front-end web applications and the browser.  This library is based on the excellent CashShuffle work by https://github.com/clifordsymack/ .
 
 **WARNING**
-This client is a work in progress and currently does not shuffle any coins.  It only supplies a "dummy class" that mimicks the functionality that the completed version will provide.  This is being provided to allow cashshuffle web-app developers to start building their integrations while the final version of this library is being completed.  Comments, suggestions, and pull requests are very much welcome!
+This client is in early alpha release.  Beware! Comments, suggestions, and pull requests are very much welcome!
 
 ### Usage
 
 ```
 
-var myClient = new ShuffleClient({
+const myClient = new ShuffleClient({
   coins: [
     {
       cashAddress: 'bitcoincash:qr7u5383gw5ckyls29mlpralgj23w4pgvc7rp7kphs',
@@ -26,24 +26,42 @@ var myClient = new ShuffleClient({
       amountSatoshis: 1629195
     }
   ],
-
-  serverUri: 'wss://shuffle.servo.cash:1337',
-  protocolVersion: 100,
+  hooks: {
+    change: function(){
+      // Insert custom address generation logic here
+      return newAddressForChange;
+    },
+    shuffled: function() {
+      // Insert custom address generation logic here
+      return newAddressForMyShuffledCoin;
+    }
+  },
+  protocolVersion: 300,
   serverStatsUri: 'https://shuffle.servo.cash:8080/stats',
-  maxShuffleRounds: 4,
+  maxShuffleRounds: 1,
   disableAutoShuffle: true
 });
 
-
 myClient.on('shuffle', function(shuffleRoundData) {
 
-  var shuffledCoin = shuffleRoundData.new;
+  const myShuffledCoin = shuffleRoundData.shuffled;
 
-  var changeFromShuffle = shuffleRoundData.change;
+  const changeFromShuffle = shuffleRoundData.change;
 
 });
 
+this.emit('skipped', function(coinObject) {
+  // Emitted when a coin is too small to shuffle or if it is
+  // otherwise incompatible with the client and/or protocol.
+});
+
+
+// Starts shuffling coins.  Only necessary if the `disableAutoShuffle`
+// flag was set to true or if you've called `myClient.stop`
 myClient.start();
+
+// Stops the client from joining new shuffle rounds.
+myClient.stop();
 
 ```
 
@@ -59,24 +77,33 @@ Collection of bitcoin utxos that the user intends to shuffle.  Currently all fie
 
 The client should only connect to pools following this version of the cashshuffle protocol.
 
-##### `serverUri`
-> String
-
-Ignore this.  It won't be needed in the completed version.
-
 ##### `serverStatsUri`
 > String
 
 The URI for the cashshuffle server's `/stats` endpoint which provides the client with a list of available shuffling pools. 
 
 ##### `maxShuffleRounds`
-> Integer > 0
+> Integer greater than 0
+
+This sets the number of simoultanious shuffle rounds the client will join.
 
 ##### `disableAutoShuffle`
 > Boolean
 
-Should the client immediately start shuffling?
+Should the client immediately start shuffling? `false` by default.
 
-### Client methods
+### Documentation
+
+Check out the docs in `./docs` ( Actually don't.  It's empty )
+
+* See it in action at https://www.youtube.com/watch?v=-SZHDFlGyVY
+
+* See HD wallet demo at https://www.youtube.com/watch?v=anSlEdsp2Qo
 
 ##### TODO!
+
+
+### Roadmap
+
+- Tests!!!
+- Build for use in browser
