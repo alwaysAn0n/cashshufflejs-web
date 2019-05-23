@@ -124,7 +124,7 @@ myWallet
 })
 .then(async (updatedWallet) => {
 
-  let numberOfClients = 1;
+  let numberOfClients = 2;
   while (numberOfClients > 0) {
 
     try {
