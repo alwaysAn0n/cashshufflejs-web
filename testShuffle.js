@@ -80,8 +80,8 @@ const addClientToShuffle = async function(clientNumber) {
     maxShuffleRounds: 1,
     // Disable automatically joining shuffle rounds
     // once a connection with the server is established
-    disableAutoShuffle: true,
-    serverStatsUri: 'http://192.168.1.202:8080/stats'
+    disableAutoShuffle: false,
+    serverStatsUri: 'http://localhost:8080/stats'
   });
 
 
@@ -98,7 +98,7 @@ const addClientToShuffle = async function(clientNumber) {
 
     // Just a random delay to more equally distribute
     // the load on the bitcoin.com servers.
-    await delay(Math.random()*3000+570);
+    await delay(Math.random()*1000+570);
 
     try {
       await myWallet.updateAddresses()
