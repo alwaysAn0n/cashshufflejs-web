@@ -80,8 +80,8 @@ const addClientToShuffle = async function(clientNumber) {
     maxShuffleRounds: 1,
     // Disable automatically joining shuffle rounds
     // once a connection with the server is established
-    disableAutoShuffle: false,
-    serverStatsUri: 'http://localhost:8080/stats'
+    disableAutoShuffle: true,
+    serverStatsUri: 'http://192.168.1.202:8080/stats'
   });
 
 
@@ -105,7 +105,7 @@ const addClientToShuffle = async function(clientNumber) {
     }
     catch(nope) {
       console.log('Somethings gone wrong', nope);
-      process.exit();
+      // process.exit();
     }
 
     myWallet.unfreezeAddresses( coinsToUnfreeze );
@@ -132,7 +132,7 @@ myWallet
     }
     catch(nope) {
       console.log('Cannot add new client to shuffle:', nope);
-      process.exit();
+      // process.exit();
     }
 
     await delay(Math.random()*1000+500);

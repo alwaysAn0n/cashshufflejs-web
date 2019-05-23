@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -25,7 +26,7 @@
   </style>
 </head>
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
-<script src="./lib/ShuffleClient.js"></script>
+<script src="./dist/ShuffleClient.js"></script>
 <body>
 
 <div ng-app="myApp" ng-controller="myCtrl"  ng-cloak>
@@ -85,11 +86,11 @@
     // To shuffle or not to shuffle
     $scope.doTheShuffle = false;
 
-    // $scope.messageFromClient = 'Shuffle Client disconnected';
+    $scope.messageFromClient = 'Shuffle Client disconnected';
 
     $scope.connectToServer = function() {
       console.log('go server!');
-      $scope.client.shuffle();
+      // $scope.client.shuffle();
     };
 
     $scope.toggleShuffleStatus = function() {
@@ -109,45 +110,40 @@
 
     };
 
+    $scope.coin = {
+      txid: '',
+      vout: ,
+      amountSatoshis: ,
+      legacyAddress: '',
+      cashAddress: '',
+      scriptPubKey: '',
+      privateKeyWif: ''
+    };
+
+    $scope.change = {
+      txid: '',
+      vout: ,
+      amountSatoshis: ,
+      legacyAddress: '',
+      cashAddress: '',
+      scriptPubKey: '',
+      privateKeyWif: '',
+    };
+
     $scope.client = new ShuffleClient({
       coins: [
-        {
-          cashAddress: 'bitcoincash:qr7u5383gw5ckyls29mlpralgj23w4pgvc7rp7kphs',
-          privateKey: 'abc123',
-          txid: 'ca7cd24835a00310634f2115d0182ea5eef622c4a8876a7093939dda46ab5dc5',
-          vout: 0,
-          amountSatoshis: 3258390
-        },
-
-        {
-          cashAddress: 'bitcoincash:qr7lekud8kkn3zamyedsf55n383c4zvv6s0t8m69fl',
-          privateKey: 'abc123',
-          txid: '02e79254e96885db1853efe8712898853cc6888320db69fa1fe04997dc15d872',
-          vout: 0,
-          amountSatoshis: 1629195
-        },
-
-        {
-          cashAddress: 'bitcoincash:qpazvaw8xdgqfw8uhxnyt4l39dkaxrlnrv8c5wepgu',
-          privateKey: 'abc123',
-          txid: '65bc4c458be413a0c4eb11de4d113e4255305ff1b6e2b6426a122bcc0db630b2',
-          vout: 0,
-          amountSatoshis: 1111
-        },
-
-        {
-          cashAddress: 'bitcoincash:qpazvaw8xdgqfw8uhxnyt4l39dkaxrlnrv8c5wepgu',
-          privateKey: 'abc123',
-          txid: '0bea16c776905bf24b6ecd8eb8f969484278780f84bc1768c9da8746c4bac30c',
-          vout: 1,
-          amountSatoshis: 2851092
-        }
+        $scope.coin
       ],
-      serverUri: 'wss://shuffle.servo.cash:1337',
-      protocolVersion: 100,
-      serverStatsUri: 'https://shuffle.servo.cash:8080/stats',
-      maxShuffleRounds: 4,
-      disableAutoShuffle: true
+      hooks: {
+        change: function(){ return $scope.change },
+        shuffled: function(){ return $scope.change }
+      },
+      protocolVersion: 300,
+      maxShuffleRounds: 1,
+      // Disable automatically joining shuffle rounds
+      // once a connection with the server is established
+      disableAutoShuffle: false,
+      serverStatsUri: 'http://192.168.1.202:8080/stats'
     });
 
     $scope.showEventMessage = function(eventData) {
@@ -165,7 +161,7 @@
 
     }
 
-
+  window.scope = $scope;
   });
 </script>
 
