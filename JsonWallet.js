@@ -377,7 +377,12 @@ class JsonWallet {
     }
   }
 
-  async updateAddresses(updateAllAddresses) {
+  async updateAddresses(updateAllAddresses, onlyUpdateThese) {
+    // If this function is only being asked to update a specific
+    // list of addresses, make sure they are in cashAddress format.
+    onlyUpdateThese = _.map(onlyUpdateThese, function(oneThing) {
+      return _.isString(oneThing) ? BITBOX.Address.toCashAddress(oneThing) : oneThing.cashAddress;
+    }) || [];
     // If an address has been used and contains no coins,
     // only update it once every 30 minutes
     let updateDeadFrequency = 1000*60*30;
@@ -389,7 +394,12 @@ class JsonWallet {
       let addressIsDead = oneAddress.balanceSatoshis <= 0 && oneAddress.used;
       let deadAddressNeedsUpdating = new Date().getTime() >= oneAddress.lastUpdated+updateDeadFrequency;
 
-      if (updateAllAddresses || !addressIsDead) {
+      if (onlyUpdateThese.length) {
+        if (onlyUpdateThese.indexOf(oneAddress.cashAddress) > -1) {
+          keepers.push(oneAddress);
+        }
+      }
+      else if (updateAllAddresses || !addressIsDead) {
         keepers.push(oneAddress);
       }
       else {
@@ -506,8 +516,12 @@ class JsonWallet {
       shuffledBalance: 0
     });
 
-    stats.balance = '~'+ ( Number( Math.floor(BITBOX.BitcoinCash.satsToBits(stats.balance) ) ).toLocaleString() )+' bits';
-    stats.shuffledBalance = '~'+ ( Number( Math.floor(BITBOX.BitcoinCash.satsToBits(stats.shuffledBalance) ) ).toLocaleString() ) +' bits';
+    let formatNumber = function(someNumber) {
+      return (someNumber.toString().split('').reverse().join('')).replace(/(\d{3})/g,'$1,').split('').reverse().join('')
+    };
+
+    stats.balance = formatNumber(stats.balance)+' sats or ~'+ ( Number( Math.floor(BITBOX.BitcoinCash.toBitcoinCash(stats.balance) ) ).toLocaleString() )+' bch';
+    stats.shuffledBalance = formatNumber(stats.shuffledBalance)+' sats or ~'+ ( Number( Math.floor(BITBOX.BitcoinCash.toBitcoinCash(stats.shuffledBalance) ) ).toLocaleString() ) +' bch';
 
     console.log('\n\nWallet Stats');
     for (let oneProp in stats) {
@@ -517,6 +531,141 @@ class JsonWallet {
 
     return this;
 
+  }
+
+
+  async send(sendOptions) {
+
+    // Accepts single or collection of JsonWallet `coin` formatted objects
+    let fromCoins = _.isArray(sendOptions.from) ? sendOptions.from : [sendOptions.from];
+
+    // Amount to be sent to the single bitcoin address included in the `sendOptions.to` param;
+    let toAmountSatoshis = sendOptions.amountSatoshis || undefined;
+
+    // Accepts single bitcoin address or array of objects, each containing a `cashAddress` field and `amountSatoshis` field
+    let to = !_.isArray(sendOptions.to) ? [ { cashAddress: BITBOX.Address.toCashAddress(sendOptions.to), amountSatoshis: sendOptions.amountSatoshis} ] : sendOptions.to;
+
+    try {
+      await this.updateAddresses(undefined, _.uniq(_.compact(_.map(fromCoins, 'cashAddress'))) );
+    }
+    catch(nope) {
+      console.log('Cannot update addresses', nope);
+      throw nope;
+    }
+
+    let useOpReturn = sendOptions.opreturn || undefined;
+
+    // Start building the transaction
+
+    let transactionBuilder = new BITBOX.TransactionBuilder('mainnet');
+
+    let tx = {};
+
+    tx.inputs = _.reduce(fromCoins, (keepers, oneCoin, arrayIndex) => {
+
+      let updatedCoin = _.find(this.coins, { txid: oneCoin.txid, vout: oneCoin.vout });
+
+      if (updatedCoin) {
+        _.extend(updatedCoin, {
+          vin: arrayIndex,
+          ecpair: BITBOX.ECPair.fromWIF(oneCoin.privateKeyWif)
+        });
+        keepers.push(updatedCoin);
+      }
+      return keepers;
+    }, []);
+
+    if (useOpReturn) {
+      tx.feesNeeded = BITBOX.BitcoinCash.getByteCount({ P2PKH: tx.inputs.length }, { P2PKH: to.length + 2 });
+    }
+    else {
+      tx.feesNeeded = BITBOX.BitcoinCash.getByteCount({ P2PKH: tx.inputs.length }, { P2PKH: to.length });
+    }
+
+    tx.outputs = _.reduce(to, (keepers, oneToObject, arrayIndex) => {
+
+      oneToObject.vout = arrayIndex;
+
+      oneToObject.legacyAddress = BITBOX.Address.toLegacyAddress(oneToObject.cashAddress);
+
+      // Override this field if the sendAll or toAmountSatoshis params were included.
+      oneToObject.amountSatoshis = sendOptions.sendAll ? _.sumBy(tx.inputs, 'amountSatoshis') : oneToObject.amountSatoshis || toAmountSatoshis;
+
+      // Calculate this outputs contribution towards the transaction fees fees
+      oneToObject.feeAmountSatoshis = Math.ceil( tx.feesNeeded / to.length );
+
+      // Now adjust the output amount for it's contribution towards transaction fees
+      oneToObject.amountSatoshis -= oneToObject.feeAmountSatoshis;
+
+      keepers.push(oneToObject);
+
+      return keepers;
+    }, []);
+
+    for (let oneOutput of _.orderBy(tx.outputs, ['vout'], ['asc'])) {
+      transactionBuilder.addOutput(oneOutput.legacyAddress, oneOutput.amountSatoshis);
+    }
+
+    if (useOpReturn) {
+      transactionBuilder.addOutput(BITBOX.Script.nullData.output.encode(Buffer.from(useOpReturn, 'ascii')), 0);
+    }
+
+    for (let oneInput of _.orderBy(tx.inputs, ['vin'], ['asc'])) {
+      transactionBuilder.addInput(oneInput.txid, oneInput.vout);
+      // transactionBuilder.sign(oneInput.vin, oneInput.ecpair, undefined/*redeemScript*/, transactionBuilder.hashTypes.SIGHASH_ALL, oneInput.amountSatoshis, transactionBuilder.signatureAlgorithms.SCHNORR);
+    }
+    for (let oneInput of _.orderBy(tx.inputs, ['vin'], ['asc'])) {
+      transactionBuilder.sign(oneInput.vin, oneInput.ecpair, undefined/*redeemScript*/, transactionBuilder.hashTypes.SIGHASH_ALL, oneInput.amountSatoshis);
+    }
+
+
+    let returnData = _.extend(tx, {
+      tx: transactionBuilder.build(),
+      feeSatoshis: _.sumBy(tx.outputs, 'feeAmountSatoshis'),
+      valueInSatoshis: _.sumBy(tx.inputs, 'amountSatoshis'),
+      valueOutSatoshis: _.sumBy(tx.outputs, 'amountSatoshis'),
+      txSize: tx.feesNeeded
+    });
+
+    console.log('Got TX:', returnData);
+
+    return returnData;
+
+  }
+
+  async sendAllTo(someAddress) {
+    someAddress = BITBOX.Address.toCashAddress(someAddress);
+
+    let coinToSend = this.coins;
+
+    let sendResults;
+    try {
+      sendResults = await this.send({
+        from: coinToSend,
+        to: someAddress,
+        sendAll: true
+      });
+    }
+    catch(nope) {
+      console.log('Cannot send:', nope);
+    }
+    return sendResults;
+  }
+
+  async testSend() {
+    let coinToSend = _.find(this.coins, 'amountSatoshis');
+    let sendResults;
+    try {
+      sendResults = await this.send({
+        from: coinToSend,
+        to: this.fresh.change().cashAddress,
+        sendAll: true
+      });
+    }
+    catch(nope) {
+      console.log('Cannot send:', nope);
+    }
+    return sendResults;
   }
 
 };
