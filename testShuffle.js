@@ -71,7 +71,7 @@ const addClientToShuffle = async function(clientNumber) {
   console.log(`Adding ${clientName} to the shuffle`);
 
   shuffleIt.context[clientName] = new ShuffleClient({
-    coins: [ await grabCoinToShuffle() ],
+    coins: [],
     hooks: {
       change: newChangeAddressFromWallet,
       shuffled: newAddressForShuffledCoin
@@ -80,7 +80,7 @@ const addClientToShuffle = async function(clientNumber) {
     maxShuffleRounds: 1,
     // Disable automatically joining shuffle rounds
     // once a connection with the server is established
-    disableAutoShuffle: false,
+    disableAutoShuffle: true,
     serverStatsUri: 'http://localhost:8080/stats'
   });
 
@@ -124,7 +124,7 @@ myWallet
 })
 .then(async (updatedWallet) => {
 
-  let numberOfClients = 2;
+  let numberOfClients = 1;
   while (numberOfClients > 0) {
 
     try {

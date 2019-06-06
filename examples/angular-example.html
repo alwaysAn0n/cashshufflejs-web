@@ -1,0 +1,169 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      display: flex;
+    }
+
+    .button {
+      border: 2px solid black;
+      border-radius: 10px;
+      padding: 5px;
+      cursor: pointer;
+    }
+
+    .coin {
+      color: black;
+      background-color: gold;
+      border: 1px solid black;
+      padding: 5px;
+    }
+
+
+  </style>
+</head>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+<script src="../dist/ShuffleClient.js"></script>
+<body>
+
+<div ng-app="myApp" ng-controller="myCtrl"  ng-cloak>
+  <div ng-click="toggleShuffleStatus()" class="button">
+    {{ doTheShuffle ? 'Stop Shuffling' : 'Start Shuffling!' }}
+  </div>
+
+  <br><br>
+
+  <p>
+    Skipped Coins
+    <span ng-if="client.skipped && client.skipped.length">
+      ( {{ client.skipped.length }} )
+    </span>
+  </p>
+  <div ng-repeat="coin in client.skipped" class="coin">
+    {{ coin.amountSatoshis }} sats
+  </div>
+
+  <p>
+    In Progress
+    <span ng-if="client.rounds && client.rounds.length">
+      ( {{ client.rounds.length }} )
+    </span>
+  </p>
+  <div ng-repeat="round in client.rounds" class="coin">
+    {{ round.coin && round.coin.amountSatoshis }} sats
+  </div>
+
+  <p>
+    Unshuffled Coins
+    <span ng-if="client.coins && client.coins.length">
+      ( {{ client.coins.length }} )
+    </span>
+  </p>
+  <div ng-repeat="coin in client.coins" class="coin">
+    {{ coin.amountSatoshis }} sats
+  </div>
+
+  <p>
+    Shuffled Coins
+    <span ng-if="client.shuffled && client.shuffled.length">
+      ( {{ client.shuffled.length }} )
+    </span>
+  </p>
+
+  <div ng-repeat="coin in client.shuffled" class="coin">
+    {{ coin.amountSatoshis }} sats
+  </div>
+
+</div>
+
+<script>
+  var app = angular.module('myApp', []);
+  app.controller('myCtrl', function($scope) {
+
+    // To shuffle or not to shuffle
+    $scope.doTheShuffle = false;
+
+    $scope.messageFromClient = 'Shuffle Client disconnected';
+
+    $scope.connectToServer = function() {
+      console.log('go server!');
+      // $scope.client.shuffle();
+    };
+
+    $scope.toggleShuffleStatus = function() {
+      console.log('Stopping or starting shuffle!');
+
+      // Stop shuffling
+      if ($scope.doTheShuffle === false) {
+        $scope.client.start();
+      }
+      // Start Shuffling
+      else {
+        $scope.client.stop();
+      }
+
+      console.log('changing shuffle status from', $scope.doTheShuffle, 'to', !!!$scope.doTheShuffle);
+      $scope.doTheShuffle = $scope.client.isShuffling;
+
+    };
+
+    $scope.coin = {
+      txid: '',
+      vout: '',
+      amountSatoshis: '',
+      legacyAddress: '',
+      cashAddress: '',
+      scriptPubKey: '',
+      privateKeyWif: ''
+    };
+
+    $scope.change = {
+      txid: '',
+      vout: '',
+      amountSatoshis: '',
+      legacyAddress: '',
+      cashAddress: '',
+      scriptPubKey: '',
+      privateKeyWif: ''
+    };
+
+    $scope.client = new ShuffleClient({
+      coins: [
+        $scope.coin
+      ],
+      hooks: {
+        change: function(){ return $scope.change },
+        shuffled: function(){ return $scope.change }
+      },
+      protocolVersion: 300,
+      maxShuffleRounds: 1,
+      // Disable automatically joining shuffle rounds
+      // once a connection with the server is established
+      disableAutoShuffle: false,
+      serverStatsUri: 'http://192.168.1.202:8080/stats'
+    });
+
+    $scope.showEventMessage = function(eventData) {
+      console.log('EVENT!', eventData);
+      $scope.messageFromClient = 'Something happened:'+JSON.stringify(eventData,null,4);
+    }
+
+    for (let oneReason of ['shuffle', 'skipped']) {
+
+      $scope.client.on(oneReason, (shuffleObect) => {
+        $scope.$apply(function () {
+            $scope.client = $scope.client;
+        });
+      });
+
+    }
+
+  window.scope = $scope;
+  });
+</script>
+
+</body>
+</html>
