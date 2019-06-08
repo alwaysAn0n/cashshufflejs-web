@@ -92,6 +92,23 @@ This sets the number of simoultanious shuffle rounds the client will join.
 
 Should the client immediately start shuffling? `false` by default.
 
+### EventEmitter events
+
+The `ShuffleClient` class is also a nodejs style `EventEmitter` that you can listen on.
+
+##### Events
+
+- `shuffle`
+- `skipped`
+- `abort`
+- `failed`
+- `stopped`
+- `started`
+- `phase`
+- `message`
+- `debug`
+
+
 ### Documentation
 
 Check out the docs in `./docs` ( Actually don't.  It's empty )
