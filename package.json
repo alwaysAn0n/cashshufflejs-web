@@ -31,7 +31,7 @@
     "bitbox-sdk": "5.1.1",
     "bitcoincashjs-fork": "1.0.3",
     "debug": "4.1.1",
-    "lodash": "4.17.11",
+    "lodash": "4.17.13",
     "protobufjs": "6.8.8",
     "qrcode-terminal": "^0.12.0",
     "ws": "6.2.1"
