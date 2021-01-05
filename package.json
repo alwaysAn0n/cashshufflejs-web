@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/alwaysAn0n/cashshufflejs-web#readme",
   "dependencies": {
-    "axios": "0.18.0",
+    "axios": "0.21.1",
     "bitbox-sdk": "5.1.1",
     "bitcoincashjs-fork": "1.0.3",
     "debug": "4.1.1",
